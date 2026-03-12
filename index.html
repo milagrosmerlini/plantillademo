@@ -1,0 +1,903 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Plantilla Carrito</title>
+
+  <link rel="stylesheet" href="style.css?v=20260312-1">
+  <link rel="manifest" href="manifest.json?v=20260312-1">
+  <meta name="theme-color" content="#c97a2b">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+  <link rel="icon" href="logo.png?v=20260312-1">
+  <link rel="apple-touch-icon" href="logo.png?v=20260312-1">
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="header-left">
+      <div class="logo">
+        <img id="brand-logo" src="logo.png" alt="Logo del negocio">
+      </div>
+    </div>
+
+    <div class="header-center" id="brand-title">Mi Carrito</div>
+
+    <div class="menuWrap">
+      <button class="iconBtn" id="menu-btn" aria-label="Abrir menu" aria-expanded="false" type="button">
+        <span class="burger"></span>
+        <span class="burger"></span>
+        <span class="burger"></span>
+      </button>
+
+      <div class="menu" id="menu" aria-hidden="true">
+        <button class="menuItem" data-go="cobrar" type="button">Cobrar</button>
+        <button class="menuItem" data-go="ventas" type="button">Ventas</button>
+        <button class="menuItem" data-go="caja" type="button">Caja</button>
+        <button class="menuItem" data-go="gastos" type="button">Gastos</button>
+        <button class="menuItem" data-go="informacion" type="button">Información</button>
+        <button class="menuItem" data-go="editar" type="button">Editar</button>
+        <button class="menuItem" data-go="sesion" type="button">Sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- =========================
+         TAB: COBRAR
+    ========================== -->
+    <section class="panel" id="tab-cobrar">
+      <div class="card saleDateCard">
+        <label class="field">
+          <span>Fecha de la venta</span>
+          <input id="sale-date" type="date" lang="es-AR" />
+        </label>
+      </div>
+
+      <!-- Canal -->
+      <div class="card channelTabs">
+        <button class="channelTab active" id="tab-presencial" data-channel="presencial" type="button">Presencial</button>
+        <button class="channelTab" id="tab-pedidosya" data-channel="pedidosya" type="button">PedidosYa</button>
+      </div>
+
+      <div class="grid" id="products-grid"></div>
+
+      <div class="card summary">
+        <div class="summary-top">
+          <div>
+            <h2 id="summary-title" class="bill-subtitle">Total</h2>
+            <p class="muted tiny" id="promo-line"></p>
+          </div>
+          <div class="total" id="total">$0</div>
+        </div>
+
+        <div class="hidden" id="pedidosya-discount-box">
+          <div class="billRow">
+            <div class="billLeft">
+              <span class="bill-subtitle">Descuento</span>
+              <label class="field billField">
+                <input id="pedidosya-discount" type="number" inputmode="numeric" min="0" max="100" step="1" value="0" />
+              </label>
+              <span class="bill-subtitle">%</span>
+            </div>
+            <div class="billRight" id="pedidosya-discount-amount">$0</div>
+          </div>
+
+          <div class="billRow totalRow">
+            <div class="billLeft"><span class="bill-total-word">Total</span></div>
+            <div class="billRight grandTotal" id="pedidosya-final-total">$0</div>
+          </div>
+        </div>
+
+        <div class="splitpay">
+          <h3>Pago</h3>
+
+          <div class="payMode">
+            <label class="chip">
+              <input type="radio" name="paymode" value="cash" checked>
+              <span>Efectivo</span>
+            </label>
+
+            <label class="chip">
+              <input type="radio" name="paymode" value="transfer">
+              <span id="transfer-label">Transferencia</span>
+            </label>
+
+            <label class="chip hidden">
+              <input type="radio" name="paymode" value="peya">
+              <span>PeYa</span>
+            </label>
+
+            <label class="chip">
+              <input type="radio" name="paymode" value="mixed">
+              <span>Mixto</span>
+            </label>
+          </div>
+
+          <div id="mixed-area" class="hidden">
+            <div class="split-grid">
+              <label class="field">
+                <span>Efectivo</span>
+                <input id="cash" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+              </label>
+
+              <label class="field">
+                <span>Transferencia</span>
+                <input id="transfer" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+              </label>
+
+              <div class="field readonly">
+                <span>Falta / Sobra</span>
+                <div id="diff" class="diff">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="cash-change-area" class="hidden">
+            <div class="split-grid">
+              <label class="field">
+                <span>Cliente paga con</span>
+                <input id="cash-received" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+              </label>
+              <div class="field readonly">
+                <span>Vuelto</span>
+                <div id="cash-change" class="diff">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn" id="btn-save" type="button">Guardar venta</button>
+            <button class="btn ghost" id="btn-clear" type="button">Limpiar</button>
+          </div>
+
+          <p class="tiny muted" id="save-msg"></p>
+          <p class="tiny muted lockedNote" id="edit-note" style="display:none;"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         TAB: VENTAS
+    ========================== -->
+    <section class="panel" id="tab-ventas">
+      <div class="card">
+        <div class="row space">
+          <div>
+            <h2 id="today-title">Ventas</h2>
+          </div>
+
+          <div class="row space"></div>
+        </div>
+
+        <div class="kpis kpis-compact">
+          <div class="kpi">
+            <div class="kpi-title">Total del día</div>
+            <div class="kpi-value" id="today-total">$0</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-title">Ventas</div>
+            <div class="kpi-value" id="today-count">0</div>
+          </div>
+        </div>
+        <div class="kpis" style="margin-top:12px;">
+          <div class="kpi">
+            <div class="kpi-title">Efectivo</div>
+            <div class="kpi-value" id="today-cash">$0</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-title">Transferencia</div>
+            <div class="kpi-value" id="today-transfer">$0</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-title">PeYa</div>
+            <div class="kpi-value" id="today-peya">$0</div>
+          </div>
+        </div>
+
+        <div class="actions hidden" id="sales-less-top-wrap" style="margin-top:8px;">
+          <button class="btn ghost" id="btn-sales-less-top" type="button">Ver menos</button>
+        </div>
+        <div id="sales-list" class="sales"></div>
+        <div class="actions" id="sales-more-wrap" style="margin-top:8px;">
+          <button class="btn ghost" id="btn-sales-more" type="button">Ver mas</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="row space" id="sales-month-header">
+          <div>
+            <h2>Ventas mensuales</h2>
+            <p class="muted tiny">Elegí el mes para ver totales por método.</p>
+          </div>
+          <label class="field" id="sales-month-picker">
+            <input id="sales-month-input" type="month" />
+          </label>
+        </div>
+
+        <div class="kpi kpiWide" style="margin-top:12px;">
+          <div class="kpi-title">Ventas totales</div>
+          <div class="kpi-value" id="month-total">$0</div>
+        </div>
+        <div class="actions" id="sales-month-more-wrap" style="margin-top:10px;">
+          <button class="btn ghost" id="btn-sales-month-more" type="button">Ver mas</button>
+        </div>
+        <div id="sales-month-extra" class="hidden">
+          <div class="kpis" style="margin-top:12px;">
+            <div class="kpi">
+              <div class="kpi-title">Efectivo</div>
+              <div class="kpi-value" id="month-cash">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Transferencia</div>
+              <div class="kpi-value" id="month-transfer">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">PeYa</div>
+              <div class="kpi-value" id="month-peya">$0</div>
+            </div>
+          </div>
+
+          <div class="kpis" style="margin-top:12px;">
+            <div class="kpi">
+              <div class="kpi-title">Cubanito común</div>
+              <div class="kpi-value" id="month-qty-comun">0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Choco negro</div>
+              <div class="kpi-value" id="month-qty-negro">0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Choco blanco</div>
+              <div class="kpi-value" id="month-qty-blanco">0</div>
+            </div>
+          </div>
+          <div class="actions hidden" id="sales-month-less-wrap" style="margin-top:10px;">
+            <button class="btn ghost" id="btn-sales-month-less" type="button">Ver menos</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="row space">
+          <h2>Historial de ventas</h2>
+          <p class="muted tiny">Entra a una fecha para ver totales por metodo.</p>
+        </div>
+
+        <div class="actions hidden" id="history-less-top-wrap" style="margin-top:8px;">
+          <button class="btn ghost" id="btn-history-less-top" type="button">Ver menos</button>
+        </div>
+        <div id="history-list" class="historyList"></div>
+        <div class="actions" id="history-more-wrap" style="margin-top:8px;">
+          <button class="btn ghost" id="btn-history-more" type="button">Ver mas</button>
+        </div>
+        <div class="actions" id="history-more-wrap-bottom" style="margin-top:8px;">
+          <button class="btn ghost" id="btn-history-more-bottom" type="button">Ver menos</button>
+        </div>
+
+        <div id="history-detail" class="historyDetail hidden">
+          <div class="row space">
+            <div>
+              <h2 id="history-title">Fecha</h2>
+              <p class="muted tiny">Total del día por metodo</p>
+            </div>
+            <button class="btn ghost" id="btn-history-back" type="button">Volver</button>
+          </div>
+
+          <div class="kpi kpiWide" style="margin-top:12px;">
+            <div class="kpi-title">Total</div>
+            <div class="kpi-value" id="hist-total">$0</div>
+          </div>
+
+          <div class="kpis" style="margin-top:12px;">
+            <div class="kpi">
+              <div class="kpi-title">Efectivo</div>
+              <div class="kpi-value" id="hist-cash">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Transferencia</div>
+              <div class="kpi-value" id="hist-transfer">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">PeYa</div>
+              <div class="kpi-value" id="hist-peya">$0</div>
+            </div>
+          </div>
+
+          <div class="kpis" style="margin-top:12px;">
+            <div class="kpi">
+              <div class="kpi-title">Cubanito común</div>
+              <div class="kpi-value" id="hist-qty-comun">0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Choco negro</div>
+              <div class="kpi-value" id="hist-qty-negro">0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Choco blanco</div>
+              <div class="kpi-value" id="hist-qty-blanco">0</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <h3>Ventas del día</h3>
+          <div id="hist-sales-list" class="sales"></div>
+          <div class="actions" id="hist-sales-more-wrap" style="margin-top:8px;">
+            <button class="btn ghost" id="btn-hist-sales-more" type="button">Ver mas</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         TAB: CAJA
+    ========================== -->
+    <section class="panel" id="tab-caja">
+      <div class="grid two">
+        <div class="card cash-real-card">
+          <h2 id="caja-date">Caja - Fecha: --/--/----</h2>
+
+          <div class="kpi kpiWide" style="margin-top:12px;">
+            <div class="kpi-title">Total vendido</div>
+            <div class="kpi-value" id="kpi-total">$0</div>
+            <p class="tiny muted" id="kpi-total-note" style="text-align:center; margin-top:6px;"></p>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi">
+              <div class="kpi-title">Efectivo</div>
+              <div class="kpi-value" id="kpi-cash">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Transferencia</div>
+              <div class="kpi-value" id="kpi-transfer">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">PeYa</div>
+              <div class="kpi-value" id="kpi-peya">$0</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="card">
+          <h2>Caja carro</h2>
+          <p class="muted tiny">Efectivo con el que se inicia el día.</p>
+
+          <label class="field cash-initial-field">
+            <span>Caja diaria inicial</span>
+            <input id="cash-initial" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+          </label>
+
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn" id="btn-cash-initial-save" type="button">Guardar</button>
+            <button class="btn ghost" id="btn-cash-initial-edit" type="button">Modificar</button>
+            <button class="btn ghost" id="btn-caja-real-more" type="button">Ver mas</button>
+          </div>
+          <p class="tiny muted" id="cash-initial-msg"></p>
+
+          <div id="caja-real-extra" class="hidden">
+          <label class="field cash-real-counted-field">
+            <span>Efectivo real contado</span>
+            <input id="cash-real" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+          </label>
+
+          <div class="field readonly cash-real-diff-field">
+            <span>Efectivo final del día (real − caja inicial)</span>
+            <div id="cash-net-end" class="diff">—</div>
+          </div>
+
+          <div class="field readonly cash-real-diff-field">
+            <span>Diferencia (real − esperado)</span>
+            <div id="cash-delta" class="diff">—</div>
+          </div>
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn" id="btn-cash-adjust-save" type="button">Guardar</button>
+            <button class="btn ghost" id="btn-caja-real-less" type="button">Ver menos</button>
+          </div>
+          <p class="tiny muted" id="cash-adjust-msg"></p>
+          <div class="divider"></div>
+          <h3>Historial caja diaria inicial</h3>
+          <div id="cash-initial-history" class="sales"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row space" id="caja-month-header">
+            <h2>Caja mensual</h2>
+            <label class="field" id="caja-month-picker">
+              <input id="caja-month-input" type="month" />
+            </label>
+          </div>
+
+          <div class="kpi kpiWide" style="margin-top:12px;">
+            <div class="kpi-title">Caja real mensual</div>
+            <div class="kpi-value" id="caja-month-total">$0</div>
+          </div>
+
+          <div class="kpis" style="margin-top:12px;">
+            <div class="kpi">
+              <div class="kpi-title">Efectivo</div>
+              <div class="kpi-value" id="caja-month-cash">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Transferencia</div>
+              <div class="kpi-value" id="caja-month-transfer">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">PeYa</div>
+              <div class="kpi-value" id="caja-month-peya">$0</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <h3>Historial de cambios</h3>
+          <div class="actions hidden" id="caja-month-history-less-top-wrap" style="margin-top:8px;">
+            <button class="btn ghost" id="btn-caja-month-history-less-top" type="button">Ver menos</button>
+          </div>
+          <div id="caja-month-history" class="sales"></div>
+          <div class="actions" id="caja-month-history-more-wrap" style="margin-top:8px;">
+            <button class="btn ghost" id="btn-caja-month-history-more" type="button">Ver mas</button>
+          </div>
+          <div class="actions hidden" id="caja-month-history-less-bottom-wrap" style="margin-top:8px;">
+            <button class="btn ghost" id="btn-caja-month-history-less-bottom" type="button">Ver menos</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Caja sobrante mes anterior</h2>
+          <p class="muted tiny">Se aplica al mes seleccionado en Caja mensual.</p>
+
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn ghost" id="btn-carryover-more" type="button">Ver mas</button>
+          </div>
+
+          <div id="carryover-extra" class="hidden">
+            <div class="kpis carryover-grid" style="margin-top:12px;">
+            <label class="field">
+              <span>Efectivo</span>
+              <input id="carryover-cash" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+            </label>
+            <label class="field">
+              <span>Transferencia</span>
+              <input id="carryover-transfer" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+            </label>
+            <label class="field">
+              <span>PeYa</span>
+              <input id="carryover-peya" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+            </label>
+          </div>
+
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn" id="btn-carryover-save" type="button">Guardar</button>
+            <button class="btn ghost" id="btn-carryover-less" type="button">Ver menos</button>
+          </div>
+          <p class="tiny muted" id="carryover-msg"></p>
+          <div class="divider"></div>
+          <h3>Historial sobrante mensual</h3>
+          <div id="carryover-history" class="sales"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Liquidacion PeYa</h2>
+          <p class="muted tiny">Selecciona rango (puede ser de otro mes) y monto; se aplica al mes elegido en Caja mensual.</p>
+
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn ghost" id="btn-peya-liq-more" type="button">Ver mas</button>
+          </div>
+
+          <div id="peya-liq-extra" class="hidden">
+          <label class="field" style="margin-top:10px;">
+            <span>Liquidacion (desde/hasta)</span>
+            <input id="peya-liq-range" type="text" placeholder="Elegi rango de fechas" readonly />
+          </label>
+          <label class="field" style="margin-top:10px;">
+            <span>Monto liquidacion</span>
+            <input id="peya-liq-amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+          </label>
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn" id="btn-peya-liq-save" type="button">Guardar</button>
+            <button class="btn ghost" id="btn-peya-liq-less" type="button">Ver menos</button>
+          </div>
+          <p class="tiny muted" id="peya-liq-msg"></p>
+          <div class="divider"></div>
+          <h3>Historial liquidacion PeYa</h3>
+          <div id="peya-liq-history" class="sales"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <button class="btn ghost" id="btn-export" type="button">Exportar Excel (plantilla)</button>
+          <p class="tiny muted">Completa tu planilla contable en la hoja de ventas del mes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         TAB: GASTOS
+    ========================== -->
+    <section class="panel" id="tab-gastos">
+      <div class="card">
+        <div class="row space">
+          <div>
+            <h2>Gastos</h2>
+            <p class="muted tiny">Carga gastos diarios por proveedor y método de pago.</p>
+          </div>
+          <button class="btn" id="btn-expense-add" type="button">+ Nuevo gasto</button>
+        </div>
+
+        <div id="expense-form-wrap" class="hidden">
+          <div class="divider"></div>
+          <div class="editGrid">
+            <label class="field">
+              <span>Fecha</span>
+              <input id="expense-date" type="date" />
+            </label>
+            <label class="field">
+              <span>Proveedor</span>
+              <select id="expense-provider"></select>
+            </label>
+            <label class="field hidden" id="expense-settlement-range-field">
+              <span>Liquidar (desde/hasta)</span>
+              <input id="expense-settlement-range" type="text" placeholder="Elegí el rango de fechas" readonly />
+            </label>
+            <label class="field">
+              <span>Descripcion</span>
+              <select id="expense-desc"></select>
+            </label>
+            <label class="field" id="expense-unit-price-field">
+              <span>Precio unidad</span>
+              <input id="expense-unit-price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+            </label>
+            <label class="field" id="expense-qty-field">
+              <span>Cantidad</span>
+              <input id="expense-qty" type="number" inputmode="numeric" min="0" step="1" placeholder="0" />
+            </label>
+            <label class="field hidden" id="expense-direct-amount-field">
+              <span>Monto</span>
+              <input id="expense-direct-amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+            </label>
+            <label class="field">
+              <span>Metodo de pago</span>
+              <select id="expense-method">
+                <option value="efectivo">Efectivo</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="peya">PeYa</option>
+                <option value="mixto">Mixto</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button class="btn ghost" id="btn-expense-add-item" type="button">+ Agregar item</button>
+          </div>
+
+          <div class="kpis kpis-compact">
+            <div class="kpi">
+              <div class="kpi-title">Subtotal</div>
+              <div class="kpi-value" id="expense-subtotal">$0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-title">Total</div>
+              <div class="kpi-value" id="expense-total">$0</div>
+            </div>
+          </div>
+          <p class="tiny muted" id="expense-items-preview"></p>
+          <div id="expense-items-list" class="expense-items-list"></div>
+
+          <div id="expense-mixed-wrap" class="hidden">
+            <div class="split-grid">
+              <label class="field">
+                <span>Efectivo</span>
+                <input id="expense-pay-cash" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+              </label>
+              <label class="field">
+                <span>Transferencia</span>
+                <input id="expense-pay-transfer" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+              </label>
+              <label class="field">
+                <span>PeYa</span>
+                <input id="expense-pay-peya" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+              </label>
+            </div>
+            <p class="tiny muted" id="expense-mixed-diff"></p>
+          </div>
+
+          <div class="actions">
+            <button class="btn" id="btn-expense-save" type="button">Guardar gasto</button>
+            <button class="btn ghost" id="btn-expense-cancel" type="button">Cancelar</button>
+          </div>
+          <p class="tiny muted" id="expense-msg"></p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="kpis kpis-compact">
+          <div class="kpi">
+            <div class="kpi-title">Total mes</div>
+            <div class="kpi-value" id="expense-kpi-total">$0</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-title">Gastos del mes</div>
+            <div class="kpi-value" id="expense-kpi-count">0</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <h3>Historial de gastos</h3>
+        <div class="actions hidden" id="expense-less-top-wrap" style="margin-top:8px;">
+          <button class="btn ghost" id="btn-expense-less-top" type="button">Ver menos</button>
+        </div>
+        <div id="expense-list" class="sales" style="margin-top:12px;"></div>
+        <div class="actions" id="expense-more-wrap" style="margin-top:8px;">
+          <button class="btn ghost" id="btn-expense-more" type="button">Ver mas</button>
+        </div>
+        <div class="actions hidden" id="expense-less-bottom-wrap" style="margin-top:8px;">
+          <button class="btn ghost" id="btn-expense-less-bottom" type="button">Ver menos</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="row space" id="expense-month-header">
+          <div>
+            <h2>Gastos mensuales</h2>
+            <p class="muted tiny">Elegí un mes para ver gastos por metodo y el detalle.</p>
+          </div>
+          <label class="field" id="expense-month-picker">
+            <input id="expense-month-input" type="month" />
+          </label>
+        </div>
+
+        <div class="kpi kpiWide" style="margin-top:12px;">
+          <div class="kpi-title">Total gastos del mes</div>
+          <div class="kpi-value" id="expense-month-total">$0</div>
+        </div>
+
+        <div class="kpis" style="margin-top:12px;">
+          <div class="kpi">
+            <div class="kpi-title">Efectivo</div>
+            <div class="kpi-value" id="expense-month-cash">$0</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-title">Transferencia</div>
+            <div class="kpi-value" id="expense-month-transfer">$0</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-title">PeYa</div>
+            <div class="kpi-value" id="expense-month-peya">$0</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================
+         TAB: INFORMACION
+    ========================== -->
+    <section class="panel" id="tab-informacion">
+      <div class="card centeredCard">
+        <div class="row space">
+          <div>
+            <h2>Información de horarios</h2>
+            <p class="muted tiny">Mira los horarios más fuertes (franja 15:00 a 20:00), por día, período o mes, y el canal que más vendió.</p>
+          </div>
+        </div>
+
+        <div class="infoModeSwitch" style="margin-top:10px;">
+          <button class="btn" id="info-stats-mode-day" type="button">Día</button>
+          <button class="btn ghost" id="info-stats-mode-period" type="button">Período</button>
+          <button class="btn ghost" id="info-stats-mode-month" type="button">Mes</button>
+        </div>
+
+        <label class="field" id="info-stats-day-wrap" style="margin-top:10px;">
+          <span>Elegí el día</span>
+          <input id="info-stats-day-input" type="date" />
+        </label>
+
+        <label class="field hidden" id="info-stats-period-wrap" style="margin-top:10px;">
+          <span>Elegí período (desde/hasta)</span>
+          <input id="info-stats-period-input" type="text" placeholder="Elegí rango de fechas" readonly />
+        </label>
+
+        <label class="field hidden" id="info-stats-month-wrap" style="margin-top:10px;">
+          <span>Elegí el mes</span>
+          <input id="info-stats-month-input" type="month" />
+        </label>
+
+        <div class="kpis" id="info-stats-summary" style="margin-top:12px;"></div>
+
+        <div class="divider"></div>
+        <h3>Detalle por hora</h3>
+        <div id="info-stats-hours" class="hourStatsList" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="card centeredCard" style="margin-top:12px;">
+        <h2>Informacion por periodo</h2>
+        <p class="muted tiny">Elegi rango y opciones para ver solo los datos que te interesan.</p>
+
+        <div class="actions" style="margin-top:10px;">
+          <button class="btn ghost" id="btn-info-more" type="button">Ver mas</button>
+        </div>
+
+        <div id="info-extra" class="hidden">
+          <label class="field" style="margin-top:10px;">
+            <span>Periodo (desde/hasta)</span>
+            <input id="info-range" type="text" placeholder="Elegi rango de fechas" readonly />
+          </label>
+          <details class="card" style="margin-top:10px; padding:10px 12px;">
+            <summary style="cursor:pointer; font-weight:800;">Elegir qué mostrar</summary>
+            <div class="info-options-list">
+              <label class="chip info-option"><input id="f-pres-cash" type="checkbox" /><span>Presencial efectivo</span></label>
+              <label class="chip info-option"><input id="f-pres-transfer" type="checkbox" /><span>Presencial transferencia</span></label>
+              <label class="chip info-option"><input id="f-py-cash" type="checkbox" /><span>PedidosYa efectivo</span></label>
+              <label class="chip info-option"><input id="f-py-transfer" type="checkbox" /><span>PedidosYa transferencia</span></label>
+              <label class="chip info-option"><input id="f-py-peya" type="checkbox" /><span>PedidosYa PeYa</span></label>
+              <label class="chip info-option"><input id="f-exp-cash" type="checkbox" /><span>Gastos efectivo</span></label>
+              <label class="chip info-option"><input id="f-exp-transfer" type="checkbox" /><span>Gastos transferencia</span></label>
+              <label class="chip info-option"><input id="f-exp-peya" type="checkbox" /><span>Gastos PeYa</span></label>
+            </div>
+
+            <div class="info-options-list">
+              <label class="chip info-option"><input id="f-c-comun" type="checkbox" /><span>Consumo común</span></label>
+              <label class="chip info-option"><input id="f-c-negro" type="checkbox" /><span>Consumo negro</span></label>
+              <label class="chip info-option"><input id="f-c-blanco" type="checkbox" /><span>Consumo blanco</span></label>
+            </div>
+          </details>
+
+          <div class="kpis" id="info-results" style="margin-top:12px;"></div>
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn ghost" id="btn-info-less" type="button">Ver menos</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         TAB: EDITAR
+    ========================== -->
+    <section class="panel" id="tab-editar">
+      <div class="card centeredCard">
+        <div class="row space">
+          <div>
+            <h2>Editar productos y precios</h2>
+            <p class="muted tiny"></p>
+          </div>
+        </div>
+
+        <p class="tiny muted lockedNote" id="catalog-lock-note"></p>
+
+        <div class="divider"></div>
+
+        <h3>Precios por canal</h3>
+        <div id="price-editor-list" class="priceEditorList"></div>
+        <div class="actions">
+          <button class="btn" id="btn-save-prices" type="button">Guardar precios</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3>Agregar producto</h3>
+        <div class="editGrid">
+          <label class="field">
+            <span>Nombre</span>
+            <input id="new-product-name" type="text" placeholder="Ej: Cubanito premium" />
+          </label>
+          <label class="field">
+            <span>Unidad</span>
+            <input id="new-product-unit" type="text" placeholder="Unidad / Bolsa / Caja" />
+          </label>
+          <label class="field">
+            <span>Precio Presencial</span>
+            <input id="new-price-presencial" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+          </label>
+          <label class="field">
+            <span>Precio PedidosYa</span>
+            <input id="new-price-pedidosya" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="btn-add-product" type="button">Agregar producto</button>
+        </div>
+
+        <p class="tiny muted" id="catalog-msg"></p>
+      </div>
+    </section>
+    <!-- =========================
+         TAB: SESIÓN
+    ========================== -->
+    <section class="panel" id="tab-sesion">
+      <div class="card centeredCard">
+        <div class="row space">
+          <div>
+            <h2>Sesión</h2>
+            <p class="muted tiny">Si no sos admin igual podés ver todo, pero no editar.</p>
+          </div>
+          <span class="badge" id="auth-status-badge">Invitado</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="authGrid">
+          <label class="field">
+            <span>Código de acceso</span>
+            <div class="authCodeWrap">
+              <input id="auth-code" type="password" placeholder="Ingresá el código" />
+              <button class="authEyeBtn" id="auth-code-toggle" type="button" aria-label="Mostrar código" aria-pressed="false">👁</button>
+            </div>
+          </label>
+
+          <div class="actions">
+            <button class="btn" id="btn-login-code" type="button">Entrar con código</button>
+            <button class="btn danger ghost" id="btn-logout" type="button">Salir</button>
+          </div>
+
+          <p class="tiny muted" id="auth-msg"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer muted tiny" id="brand-footer">
+     Plantilla App de Carrito
+  </footer>
+
+  <script src="config.js?v=20260312-plantilla"></script>
+  <script>
+    const cfg = window.APP_CONFIG || {};
+    const appName = String(cfg.APP_NAME || "Mi Carrito");
+    const logoUrl = String(cfg.LOGO_URL || "logo.png");
+    const footerText = String(cfg.FOOTER_TEXT || `${appName} - App de Caja`);
+
+    document.title = appName;
+    const titleEl = document.getElementById("brand-title");
+    if (titleEl) titleEl.textContent = appName;
+    const footerEl = document.getElementById("brand-footer");
+    if (footerEl) footerEl.textContent = footerText;
+    const logoEl = document.getElementById("brand-logo");
+    if (logoEl) {
+      logoEl.src = logoUrl;
+      logoEl.alt = appName;
+    }
+
+    window.SUPABASE_URL = String(cfg.SUPABASE_URL || "");
+    window.SUPABASE_ANON_KEY = String(cfg.SUPABASE_ANON_KEY || "");
+    if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY && typeof window.supabase?.createClient === "function") {
+      window.supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    } else {
+      console.warn("APP_CONFIG: faltan SUPABASE_URL y/o SUPABASE_ANON_KEY.");
+      window.supabase = null;
+    }
+    // Forzar cliente sin Service Worker ni Cache Storage para evitar versiones distintas.
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+          if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((k) => caches.delete(k)));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+  <script src="vendor/xlsx/xlsx.full.min.js?v=20260312-1"></script>
+  <script src="app.js?v=20260312-1"></script>
+</body>
+</html>
+
