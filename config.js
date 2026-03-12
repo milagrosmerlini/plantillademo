@@ -1,19 +1,19 @@
 // Configuracion simple por cliente.
 // Solo cambia estos valores y deja el resto igual.
 window.APP_CONFIG = {
-  APP_NAME: "Mi Carrito de Cubanitos",
-  FOOTER_TEXT: "Mi Carrito de Cubanitos - App de Caja",
+  APP_NAME: "Carrito Demo",
+  FOOTER_TEXT: "Carrito Demo - App de ejemplo",
   LOGO_URL: "logo.png",
 
   // Importante: usar un prefijo distinto por cliente para no mezclar datos locales.
-  STORAGE_PREFIX: "cliente_demo",
+  STORAGE_PREFIX: "demo",
 
   // Admin por codigo (email de la cuenta admin en Supabase Auth).
-  ADMIN_EMAIL: "admin@tu-negocio.com",
+  ADMIN_EMAIL: "admin@demo.app",
 
   // Supabase del cliente.
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: "",
+  SUPABASE_URL: "https://fhpzmobinplqialxubix.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocHptb2JpbnBscWlhbHh1Yml4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTI4MzQsImV4cCI6MjA4ODkyODgzNH0.g8h03e7T3NNxshpmnrFK6m07Lw1RecnMDg4TcxPgVfQ",
 
   // Productos por defecto (si la tabla products esta vacia).
   DEFAULT_PRODUCTS: [
