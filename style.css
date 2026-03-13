@@ -592,6 +592,27 @@ body:not(.pedidosya-mode) #tab-cobrar .card:hover{
 .cash-real-card .field.readonly div{
   padding: 9px 12px;
 }
+.caja-subblock{
+  background: var(--block-bg);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: var(--block-depth-shadow);
+  transition: box-shadow .2s ease, transform .12s ease;
+}
+.caja-subblock + .caja-subblock{
+  margin-top: 12px;
+}
+.caja-subblock:hover{
+  box-shadow: var(--block-depth-shadow-hover);
+  transform: translateY(-1px);
+}
+.caja-subblock h3{
+  margin-top: 0;
+}
+.caja-subblock .actions{
+  margin-top: 10px;
+}
 .cash-real-counted-field{
   margin-top: 16px !important;
 }

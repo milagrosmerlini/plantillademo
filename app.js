@@ -49,6 +49,8 @@ let peyaLiquidations = [];
 let carryoverHistory = [];
 let cajaMonthHistory = [];
 let cajaMonthHistoryExpanded = false;
+let cashInitialHistoryExpanded = false;
+let cashInitialEditDay = "";
 let salesTodayExpanded = false;
 let historyExpanded = false;
 let historyDaySalesExpanded = false;
@@ -157,6 +159,12 @@ const btnCashInitialSaveEl = $("#btn-cash-initial-save");
 const btnCashInitialEditEl = $("#btn-cash-initial-edit");
 const cashInitialMsgEl = $("#cash-initial-msg");
 const cashInitialHistoryEl = $("#cash-initial-history");
+const cashInitialHistoryLessTopWrapEl = $("#cash-initial-history-less-top-wrap");
+const btnCashInitialHistoryLessTopEl = $("#btn-cash-initial-history-less-top");
+const cashInitialHistoryMoreWrapEl = $("#cash-initial-history-more-wrap");
+const btnCashInitialHistoryMoreEl = $("#btn-cash-initial-history-more");
+const cashInitialReadonlyWrapEl = $("#cash-initial-readonly-wrap");
+const cashInitialReadonlyEl = $("#cash-initial-readonly");
 const todayTitleEl = $("#today-title");
 const todayTotalEl = $("#today-total");
 const todayCountEl = $("#today-count");
@@ -202,6 +210,14 @@ const peyaLiqHistoryEl = $("#peya-liq-history");
 const cajaRealExtraEl = $("#caja-real-extra");
 const btnCajaRealMoreEl = $("#btn-caja-real-more");
 const btnCajaRealLessEl = $("#btn-caja-real-less");
+const cajaResumenCardEl = $("#caja-resumen-card");
+const cajaCarroCardEl = $("#caja-carro-card");
+const cajaInicialBlockEl = $("#caja-inicial-block");
+const cajaCierreBlockEl = $("#caja-cierre-block");
+const cajaMonthCardEl = $("#caja-month-card");
+const cajaCarryoverCardEl = $("#caja-carryover-card");
+const cajaPeyaCardEl = $("#caja-peya-card");
+const cajaExportCardEl = $("#caja-export-card");
 const carryoverExtraEl = $("#carryover-extra");
 const btnCarryoverMoreEl = $("#btn-carryover-more");
 const btnCarryoverLessEl = $("#btn-carryover-less");
@@ -1950,16 +1966,24 @@ async function deleteExpenseById(id) {
 }
 
 async function refreshSession() {
-  if (forceGuestMode) {
-    session = null;
-    return;
-  }
   if (!hasSupabaseClient()) {
     session = null;
     return;
   }
   const { data } = await window.supabase.auth.getSession();
-  session = data?.session || null;
+  const remoteSession = data?.session || null;
+  if (forceGuestMode) {
+    let rememberedAdmin = false;
+    try { rememberedAdmin = localStorage.getItem(LS_ADMIN_REMEMBER_KEY) === "1"; } catch {}
+    const adminEmailSession = String(remoteSession?.user?.email || "").toLowerCase() === String(ADMIN_CODE_EMAIL).toLowerCase();
+    if (!(rememberedAdmin || adminEmailSession)) {
+      session = null;
+      return;
+    }
+    forceGuestMode = false;
+    try { localStorage.removeItem(FORCE_GUEST_KEY); } catch {}
+  }
+  session = remoteSession;
 }
 
 async function checkIsAdmin() {
@@ -2030,6 +2054,30 @@ function setEditEnabled(enabled) {
   }
 }
 
+function applyCajaAccessUi() {
+  const guestMode = !session?.user && !isAdmin;
+  const canEditInitial = !guestMode;
+  [
+    cajaResumenCardEl,
+    cajaMonthCardEl,
+    cajaCarryoverCardEl,
+    cajaPeyaCardEl,
+    cajaExportCardEl,
+  ].forEach((el) => el?.classList.toggle("hidden", guestMode));
+  cajaCarroCardEl?.classList.remove("hidden");
+  cajaCierreBlockEl?.classList.remove("hidden");
+  cajaInicialBlockEl?.classList.toggle("hidden", guestMode);
+  cashInitialReadonlyWrapEl?.classList.toggle("hidden", !guestMode);
+  if (btnCashInitialSaveEl) {
+    btnCashInitialSaveEl.disabled = !canEditInitial;
+    btnCashInitialSaveEl.classList.toggle("hidden", !canEditInitial);
+  }
+  if (btnCashInitialEditEl) {
+    btnCashInitialEditEl.disabled = !canEditInitial;
+    btnCashInitialEditEl.classList.toggle("hidden", !canEditInitial);
+  }
+}
+
 async function applyAuthState() {
   if (!hasSupabaseClient()) {
     let rememberedAdmin = false;
@@ -2041,11 +2089,19 @@ async function applyAuthState() {
       session = null;
       isAdmin = false;
     }
+    if (isAdmin && forceGuestMode) {
+      forceGuestMode = false;
+      try { localStorage.removeItem(FORCE_GUEST_KEY); } catch {}
+    }
     applyAuthUi();
     return;
   }
   await refreshSession();
   isAdmin = await checkIsAdmin();
+  if (isAdmin && forceGuestMode) {
+    forceGuestMode = false;
+    try { localStorage.removeItem(FORCE_GUEST_KEY); } catch {}
+  }
   try { localStorage.setItem(LS_ADMIN_REMEMBER_KEY, isAdmin ? "1" : "0"); } catch {}
   applyAuthUi();
 }
@@ -2057,6 +2113,7 @@ function applyAuthUi() {
     setBadge("Invitado", "bad");
     setAuthMsg("Invitado: podes guardar ventas. Gastos y edicion solo admin.");
     setEditEnabled(false);
+    applyCajaAccessUi();
     return;
   }
 
@@ -2064,12 +2121,18 @@ function applyAuthUi() {
     setBadge("Usuario (no admin)", "bad");
     setAuthMsg("Usuario no admin: podes guardar ventas. Gastos y edicion solo admin.");
     setEditEnabled(false);
+    applyCajaAccessUi();
     return;
   }
 
   setBadge("Admin OK", "good");
   setAuthMsg("Admin OK. Podes guardar ventas y editar catalogo.");
+  if (forceGuestMode) {
+    forceGuestMode = false;
+    try { localStorage.removeItem(FORCE_GUEST_KEY); } catch {}
+  }
   setEditEnabled(true);
+  applyCajaAccessUi();
 }
 
 const menuBtn = $("#menu-btn");
@@ -2460,9 +2523,7 @@ btnLogout?.addEventListener("click", async () => {
     try { localStorage.setItem(LS_ADMIN_REMEMBER_KEY, "0"); } catch {}
     session = null;
     isAdmin = false;
-    setBadge("Invitado", "bad");
-    setAuthMsg("Invitado: podes guardar ventas. Gastos y edicion solo admin.");
-    setEditEnabled(false);
+    applyAuthUi();
     renderAll();
     goTo("cobrar");
 
@@ -2873,6 +2934,8 @@ function renderCaja() {
       && Number.isFinite(Number(savedAdjust?.delta)))
   );
   const initialLocked = Boolean(savedAdjust?.initial_locked);
+  const canEditInitial = Boolean(session?.user || isAdmin);
+  const initialUnlockedForDay = String(cashInitialEditDay || "") === String(initialDay);
   const appliedDelta = hasSavedAdjust ? Number(savedAdjust.delta) : 0;
   const total = baseTotal + appliedDelta;
 
@@ -2898,15 +2961,17 @@ function renderCaja() {
       .join("");
   }
 
-  if (cashInitialEl) cashInitialEl.disabled = initialLocked;
-  if (btnCashInitialEditEl) btnCashInitialEditEl.disabled = !initialLocked;
+  if (cashInitialEl) cashInitialEl.disabled = !canEditInitial || (initialLocked && !initialUnlockedForDay);
+  if (btnCashInitialSaveEl) btnCashInitialSaveEl.disabled = !canEditInitial;
+  if (btnCashInitialEditEl) btnCashInitialEditEl.disabled = !canEditInitial;
+  if (cashInitialReadonlyEl) cashInitialReadonlyEl.textContent = `$${money(initial)}`;
   if (cashNetEndEl) {
-    cashNetEndEl.textContent = hasReal ? `$${money(netEndCash)}` : "—";
+    cashNetEndEl.textContent = hasReal ? `$${money(netEndCash)}` : `$${money(0)}`;
     cashNetEndEl.classList.remove("good", "bad");
   }
 
   if (!hasReal) {
-    if (cashDeltaEl) cashDeltaEl.textContent = "-";
+    if (cashDeltaEl) cashDeltaEl.textContent = `$${money(0)}`;
     cashDeltaEl?.classList.remove("good", "bad");
     return;
   }
@@ -2938,10 +3003,13 @@ function renderCashInitialHistory() {
 
   if (!rows.length) {
     cashInitialHistoryEl.innerHTML = `<div class="muted tiny">Todavía no hay caja inicial guardada.</div>`;
+    cashInitialHistoryLessTopWrapEl?.classList.add("hidden");
+    cashInitialHistoryMoreWrapEl?.classList.add("hidden");
     return;
   }
 
-  cashInitialHistoryEl.innerHTML = rows.map((r) => {
+  const visibleRows = cashInitialHistoryExpanded ? rows : rows.slice(0, 1);
+  cashInitialHistoryEl.innerHTML = visibleRows.map((r) => {
     const status = r.adjusted ? " · cierre guardado" : "";
     return `
       <div class="sale">
@@ -2952,6 +3020,13 @@ function renderCashInitialHistory() {
       </div>
     `;
   }).join("");
+  const canExpand = rows.length > 1;
+  cashInitialHistoryLessTopWrapEl?.classList.toggle("hidden", !canExpand || !cashInitialHistoryExpanded);
+  cashInitialHistoryMoreWrapEl?.classList.toggle("hidden", !canExpand);
+  if (btnCashInitialHistoryMoreEl) {
+    btnCashInitialHistoryMoreEl.disabled = !canExpand;
+    btnCashInitialHistoryMoreEl.textContent = cashInitialHistoryExpanded ? "Ver menos" : "Ver mas";
+  }
 }
 
 function upsertCashInitialHistoryForDay(day, initial) {
@@ -2992,14 +3067,20 @@ function saveCashAdjustForToday() {
     savedAt: new Date().toISOString(),
   };
   saveCashAdjustStore(cashAdjustByDay);
+  cashInitialEditDay = "";
   saveCashInitialPersist(initial);
+  if (cashRealEl) cashRealEl.value = "";
   setCashAdjustMsg("Ajuste guardado.");
-  setCashInitialMsg("Caja diaria inicial guardada.");
+  setCashInitialMsg("Caja inicial guardada.");
   renderCaja();
   renderCashInitialHistory();
 }
 
 function saveCashInitialForToday() {
+  if (!session?.user && !isAdmin) {
+    setCashInitialMsg("Modo invitado: no se puede modificar caja inicial.");
+    return;
+  }
   const day = cashInitialTargetDayKey();
   const initial = Math.max(0, parseNum(cashInitialEl?.value));
   const prev = cashAdjustByDay[day] || {};
@@ -3012,31 +3093,44 @@ function saveCashInitialForToday() {
     savedAt: new Date().toISOString(),
   };
   saveCashAdjustStore(cashAdjustByDay);
+  cashInitialEditDay = "";
   saveCashInitialPersist(initial);
-  setCashInitialMsg(`Caja diaria inicial guardada para ${formatDayKey(day)}.`);
+  setCashInitialMsg(`Caja inicial guardada para ${formatDayKey(day)}.`);
   setCashAdjustMsg("Para aplicar ajuste de caja, carga efectivo real y guarda ajuste.");
   renderCaja();
   renderCashInitialHistory();
 }
 
 function editCashInitialForToday() {
+  if (!session?.user && !isAdmin) {
+    setCashInitialMsg("Modo invitado: no se puede modificar caja inicial.");
+    return;
+  }
   const day = cashInitialTargetDayKey();
-  const prev = cashAdjustByDay[day];
-  if (!prev) return;
-  cashAdjustByDay[day] = { ...prev, initial_locked: false, delta: null, adjust_saved: false };
+  const prev = cashAdjustByDay[day] || {
+    initial: Math.max(0, parseNum(cashInitialEl?.value)),
+    initial_locked: true,
+    adjust_saved: false,
+    delta: null,
+  };
+  const savedAt = new Date().toISOString();
+  cashAdjustByDay[day] = { ...prev, initial_locked: false, delta: null, adjust_saved: false, savedAt };
   saveCashAdjustStore(cashAdjustByDay);
-  setCashInitialMsg(`Podés modificar la caja diaria inicial de ${formatDayKey(day)}.`);
+  cashInitialEditDay = day;
+  setCashInitialMsg(`Podés modificar la caja inicial de ${formatDayKey(day)}.`);
   setCashAdjustMsg("Volvé a guardar el ajuste de caja real.");
   renderCaja();
   renderCashInitialHistory();
 }
 
 cashInitialEl?.addEventListener("input", () => {
+  if (!session?.user && !isAdmin) return;
   const targetDay = cashInitialTargetDayKey();
-  setCashInitialMsg(`Cambios en caja diaria inicial sin guardar (se aplicará a ${formatDayKey(targetDay)}).`);
+  setCashInitialMsg(`Cambios en caja inicial sin guardar (se aplicará a ${formatDayKey(targetDay)}).`);
   renderCaja();
 });
 cashInitialEl?.addEventListener("focus", () => {
+  if (!session?.user && !isAdmin) return;
   if (String(cashInitialEl.value ?? "").trim() === "0") {
     cashInitialEl.value = "";
   }
@@ -3048,6 +3142,14 @@ cashRealEl?.addEventListener("input", () => {
 btnCashAdjustSaveEl?.addEventListener("click", saveCashAdjustForToday);
 btnCashInitialSaveEl?.addEventListener("click", saveCashInitialForToday);
 btnCashInitialEditEl?.addEventListener("click", editCashInitialForToday);
+btnCashInitialHistoryMoreEl?.addEventListener("click", () => {
+  cashInitialHistoryExpanded = !cashInitialHistoryExpanded;
+  renderCashInitialHistory();
+});
+btnCashInitialHistoryLessTopEl?.addEventListener("click", () => {
+  cashInitialHistoryExpanded = false;
+  renderCashInitialHistory();
+});
 
 function renderTodaySummary() {
   const dk = todayKey();
@@ -4564,7 +4666,7 @@ window.addEventListener("online", () => {
       const initialValue = Number(persistedInitial ?? 0);
       cashInitialEl.value = String(initialValue);
     }
-    if (cashRealEl) cashRealEl.value = String(Number(todayAdjust?.real ?? 0));
+    if (cashRealEl) cashRealEl.value = "";
     if (todayAdjust) {
       if (todayAdjust.adjust_saved) setCashAdjustMsg("Ajuste de caja real cargado.");
       else setCashAdjustMsg("Caja inicial cargada (ajuste pendiente).");
@@ -4573,7 +4675,7 @@ window.addEventListener("online", () => {
     if (salesMonthExtraEl) salesMonthExtraEl.classList.add("hidden");
     if (salesMonthMoreWrapEl) salesMonthMoreWrapEl.classList.remove("hidden");
     if (salesMonthLessWrapEl) salesMonthLessWrapEl.classList.add("hidden");
-    setExpandableSection(cajaRealExtraEl, btnCajaRealMoreEl, btnCajaRealLessEl, false);
+    setExpandableSection(cajaRealExtraEl, btnCajaRealMoreEl, btnCajaRealLessEl, true);
     setExpandableSection(carryoverExtraEl, btnCarryoverMoreEl, btnCarryoverLessEl, false);
     setExpandableSection(peyaLiqExtraEl, btnPeyaLiqMoreEl, btnPeyaLiqLessEl, false);
     setExpandableSection(infoExtraEl, btnInfoMoreEl, btnInfoLessEl, false);

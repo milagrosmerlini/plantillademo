@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <title>Plantilla Carrito</title>
 
-  <link rel="stylesheet" href="style.css?v=20260312-1">
+  <link rel="stylesheet" href="style.css?v=20260313-1">
   <link rel="manifest" href="manifest.json?v=20260312-1">
   <meta name="theme-color" content="#c97a2b">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -343,7 +343,7 @@
     ========================== -->
     <section class="panel" id="tab-caja">
       <div class="grid two">
-        <div class="card cash-real-card">
+        <div class="card cash-real-card" id="caja-resumen-card">
           <h2 id="caja-date">Caja - Fecha: --/--/----</h2>
 
           <div class="kpi kpiWide" style="margin-top:12px;">
@@ -369,49 +369,62 @@
 
         </div>
 
-        <div class="card">
+        <div class="card" id="caja-carro-card">
           <h2>Caja carro</h2>
-          <p class="muted tiny">Efectivo con el que se inicia el día.</p>
+          <div id="caja-inicial-block" class="caja-subblock">
+            <h3>Caja inicial</h3>
 
-          <label class="field cash-initial-field">
-            <span>Caja diaria inicial</span>
-            <input id="cash-initial" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
-          </label>
+            <label class="field cash-initial-field">
+              <input id="cash-initial" aria-label="Caja inicial" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+            </label>
 
-          <div class="actions" style="margin-top:10px;">
-            <button class="btn" id="btn-cash-initial-save" type="button">Guardar</button>
-            <button class="btn ghost" id="btn-cash-initial-edit" type="button">Modificar</button>
-            <button class="btn ghost" id="btn-caja-real-more" type="button">Ver mas</button>
-          </div>
-          <p class="tiny muted" id="cash-initial-msg"></p>
-
-          <div id="caja-real-extra" class="hidden">
-          <label class="field cash-real-counted-field">
-            <span>Efectivo real contado</span>
-            <input id="cash-real" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
-          </label>
-
-          <div class="field readonly cash-real-diff-field">
-            <span>Efectivo final del día (real − caja inicial)</span>
-            <div id="cash-net-end" class="diff">—</div>
+            <div class="actions" style="margin-top:10px;">
+              <button class="btn" id="btn-cash-initial-save" type="button">Guardar</button>
+              <button class="btn ghost" id="btn-cash-initial-edit" type="button">Modificar</button>
+            </div>
+            <p class="tiny muted" id="cash-initial-msg"></p>
+            <div class="divider"></div>
+            <h3>Historial caja inicial</h3>
+            <div class="actions hidden" id="cash-initial-history-less-top-wrap" style="margin-top:8px;">
+              <button class="btn ghost" id="btn-cash-initial-history-less-top" type="button">Ver menos</button>
+            </div>
+            <div id="cash-initial-history" class="sales"></div>
+            <div class="actions hidden" id="cash-initial-history-more-wrap" style="margin-top:8px;">
+              <button class="btn ghost" id="btn-cash-initial-history-more" type="button">Ver mas</button>
+            </div>
           </div>
 
-          <div class="field readonly cash-real-diff-field">
-            <span>Diferencia (real − esperado)</span>
-            <div id="cash-delta" class="diff">—</div>
-          </div>
-          <div class="actions" style="margin-top:10px;">
-            <button class="btn" id="btn-cash-adjust-save" type="button">Guardar</button>
-            <button class="btn ghost" id="btn-caja-real-less" type="button">Ver menos</button>
-          </div>
-          <p class="tiny muted" id="cash-adjust-msg"></p>
-          <div class="divider"></div>
-          <h3>Historial caja diaria inicial</h3>
-          <div id="cash-initial-history" class="sales"></div>
+          <div id="caja-cierre-block" class="caja-subblock">
+            <h3>Cierre de caja</h3>
+            <div class="field readonly hidden" id="cash-initial-readonly-wrap">
+              <span>Efectivo con el que se inicia el día</span>
+              <div id="cash-initial-readonly" class="diff">$0</div>
+            </div>
+
+            <div id="caja-real-extra">
+            <label class="field cash-real-counted-field">
+              <span>Efectivo real contado</span>
+              <input id="cash-real" type="number" inputmode="numeric" min="0" step="100" placeholder="0" />
+            </label>
+
+            <div class="field readonly cash-real-diff-field">
+              <span>Efectivo final del día (real − efectivo inicial)</span>
+              <div id="cash-net-end" class="diff">—</div>
+            </div>
+
+            <div class="field readonly cash-real-diff-field">
+              <span>Diferencia (real − esperado)</span>
+              <div id="cash-delta" class="diff">—</div>
+            </div>
+            <div class="actions" style="margin-top:10px;">
+              <button class="btn" id="btn-cash-adjust-save" type="button">Guardar</button>
+            </div>
+            <p class="tiny muted" id="cash-adjust-msg"></p>
+            </div>
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="caja-month-card">
           <div class="row space" id="caja-month-header">
             <h2>Caja mensual</h2>
             <label class="field" id="caja-month-picker">
@@ -453,7 +466,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="caja-carryover-card">
           <h2>Caja sobrante mes anterior</h2>
           <p class="muted tiny">Se aplica al mes seleccionado en Caja mensual.</p>
 
@@ -488,7 +501,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="caja-peya-card">
           <h2>Liquidacion PeYa</h2>
           <p class="muted tiny">Selecciona rango (puede ser de otro mes) y monto; se aplica al mes elegido en Caja mensual.</p>
 
@@ -516,7 +529,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="caja-export-card">
           <button class="btn ghost" id="btn-export" type="button">Exportar Excel (plantilla)</button>
           <p class="tiny muted">Completa tu planilla contable en la hoja de ventas del mes.</p>
         </div>
@@ -897,7 +910,7 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
   <script src="vendor/xlsx/xlsx.full.min.js?v=20260312-1"></script>
-  <script src="app.js?v=20260312-1"></script>
+  <script src="app.js?v=20260313-1"></script>
 </body>
 </html>
 
