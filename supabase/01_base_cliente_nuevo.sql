@@ -73,6 +73,17 @@ create table if not exists public.monthly_carryover_history (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.daily_cash_adjustments (
+  day date primary key,
+  initial numeric(12,2) not null default 0,
+  real numeric(12,2),
+  delta numeric(12,2),
+  adjust_saved boolean not null default false,
+  initial_locked boolean not null default false,
+  saved_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.admins (
   user_id uuid primary key references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
@@ -95,6 +106,7 @@ alter table public.expenses enable row level security;
 alter table public.monthly_carryovers enable row level security;
 alter table public.peya_liquidations enable row level security;
 alter table public.monthly_carryover_history enable row level security;
+alter table public.daily_cash_adjustments enable row level security;
 alter table public.admins enable row level security;
 
 -- Limpieza de policies si ya existian (idempotente)
@@ -112,6 +124,8 @@ drop policy if exists peya_liq_select_all on public.peya_liquidations;
 drop policy if exists peya_liq_write_admin on public.peya_liquidations;
 drop policy if exists carryover_hist_select_all on public.monthly_carryover_history;
 drop policy if exists carryover_hist_write_admin on public.monthly_carryover_history;
+drop policy if exists cash_adjust_select_all on public.daily_cash_adjustments;
+drop policy if exists cash_adjust_write_admin on public.daily_cash_adjustments;
 drop policy if exists admins_select_self on public.admins;
 
 -- Lectura publica (anon + auth)
@@ -139,6 +153,10 @@ create policy carryover_hist_select_all on public.monthly_carryover_history
 for select to anon, authenticated
 using (true);
 
+create policy cash_adjust_select_all on public.daily_cash_adjustments
+for select to anon, authenticated
+using (true);
+
 -- Escritura de catalogo/finanzas solo admin (auth + fila en public.admins)
 create policy products_write_admin on public.products
 for all to authenticated
@@ -161,6 +179,11 @@ using (exists (select 1 from public.admins a where a.user_id = auth.uid()))
 with check (exists (select 1 from public.admins a where a.user_id = auth.uid()));
 
 create policy carryover_hist_write_admin on public.monthly_carryover_history
+for all to authenticated
+using (exists (select 1 from public.admins a where a.user_id = auth.uid()))
+with check (exists (select 1 from public.admins a where a.user_id = auth.uid()));
+
+create policy cash_adjust_write_admin on public.daily_cash_adjustments
 for all to authenticated
 using (exists (select 1 from public.admins a where a.user_id = auth.uid()))
 with check (exists (select 1 from public.admins a where a.user_id = auth.uid()));
@@ -195,6 +218,7 @@ grant select on public.expenses to anon, authenticated;
 grant select on public.monthly_carryovers to anon, authenticated;
 grant select on public.peya_liquidations to anon, authenticated;
 grant select on public.monthly_carryover_history to anon, authenticated;
+grant select on public.daily_cash_adjustments to anon, authenticated;
 grant select on public.admins to authenticated;
 
 grant insert on public.sales to anon, authenticated;
@@ -205,3 +229,4 @@ grant insert, update, delete on public.expenses to authenticated;
 grant insert, update, delete on public.monthly_carryovers to authenticated;
 grant insert, update, delete on public.peya_liquidations to authenticated;
 grant insert, update, delete on public.monthly_carryover_history to authenticated;
+grant insert, update, delete on public.daily_cash_adjustments to authenticated;
